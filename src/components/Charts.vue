@@ -199,41 +199,43 @@ export default class Charts extends Vue {
       });
     });
 
-    EventBus.$on("refresh", async (props: { from: Date, to: Date }) => {
+    EventBus.$on("refresh", async (props: {id: string, from: Date, to: Date }) => {
         console.log(props)
-        await this.loadData(props.from, props.to)
+        await this.loadData(props.id, props.from, props.to)
     })
 
-    await this.loadData(substractDaysFromToday(2), this.dataTime)
+    await this.loadData("1569", substractDaysFromToday(2), this.dataTime)
   }
 
-  private async loadData(from: Date, to: Date) {
+  private async loadData(id: string, from: Date, to: Date) {
     this.loadingState.isDataLoading = true
-    await this.dataService.getData('1569', from, to)
+    await this.dataService.getData(id, from, to)
       .then((x) => {
         this.measures = x.data;
+        console.log(this.measures)
         console.log(this.measures)
         this.loadingState.isDataLoading = false;
 
         // @ts-ignore
-        this.chartOptions[0].series[0].data = this.measures.Pm25
+        this.chartOptions[0].series[0].data = this.measures.pm25
         // @ts-ignore
-        this.chartOptions[0].series[1].data = this.measures.Pm10
+        this.chartOptions[0].series[1].data = this.measures.pm10
         
         // @ts-ignore
-        this.chartOptions[1].series[0].data = this.measures.Pm25
+        this.chartOptions[1].series[0].data = this.measures.pm25
 
         // @ts-ignore
-        this.chartOptions[2].series[0].data = this.measures.Pm10
+        this.chartOptions[2].series[0].data = this.measures.pm10
 
         // @ts-ignore
-        this.chartOptions[3].series[0].data = this.measures.Temperature
+        this.chartOptions[3].series[0].data = this.measures.temperature
 
         // @ts-ignore
-        this.chartOptions[4].series[0].data = this.measures.Humidity
+        this.chartOptions[4].series[0].data = this.measures.humidity
 
         // @ts-ignore
-        this.chartOptions[5].series[0].data = this.measures.Pressure
+        this.chartOptions[5].series[0].data = this.measures.pressure
+        console.log(this.chartOptions[5].series[0].data)
       })
   }
 }

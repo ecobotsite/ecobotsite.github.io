@@ -9,7 +9,7 @@ class ApiClient {
 
     constructor() {
         this._axiosClient = axios.create({
-            baseURL: 'https://3z51jfr29i.execute-api.eu-central-1.amazonaws.com/prod',
+            baseURL: 'https://33bo49db5l.execute-api.eu-central-1.amazonaws.com',
         });
         this._axiosClient.interceptors.response.use((response: any) => this.ok(response),
         (error: any) => {});
