@@ -12,6 +12,7 @@ import apiClient from '../api/ApiClient';
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts';
 import { EventBus } from '@/event-bus'
+import { substractDaysFromToday } from '@/utilities/substractDaysFromToday';
 
 @Component({
   components: {
@@ -198,42 +199,41 @@ export default class Charts extends Vue {
       });
     });
 
-    EventBus.$on("refresh", async (props: { date: Date; }) => {
+    EventBus.$on("refresh", async (props: { from: Date, to: Date }) => {
         console.log(props)
-        await this.loadData(props.date)
+        await this.loadData(props.from, props.to)
     })
 
-    await this.loadData(this.dataTime)
+    await this.loadData(substractDaysFromToday(2), this.dataTime)
   }
 
-  private async loadData(date: Date) {
-    console.log(date)
+  private async loadData(from: Date, to: Date) {
     this.loadingState.isDataLoading = true
-    await this.dataService.getData(1118, date)
+    await this.dataService.getData('1569', from, to)
       .then((x) => {
         this.measures = x.data;
         console.log(this.measures)
         this.loadingState.isDataLoading = false;
 
         // @ts-ignore
-        this.chartOptions[0].series[0].data = this.measures.series.pm25
+        this.chartOptions[0].series[0].data = this.measures.Pm25
         // @ts-ignore
-        this.chartOptions[0].series[1].data = this.measures.series.pm10
+        this.chartOptions[0].series[1].data = this.measures.Pm10
         
         // @ts-ignore
-        this.chartOptions[1].series[0].data = this.measures.series.pm25
+        this.chartOptions[1].series[0].data = this.measures.Pm25
 
         // @ts-ignore
-        this.chartOptions[2].series[0].data = this.measures.series.pm10
+        this.chartOptions[2].series[0].data = this.measures.Pm10
 
         // @ts-ignore
-        this.chartOptions[3].series[0].data = this.measures.series.temperature
+        this.chartOptions[3].series[0].data = this.measures.Temperature
 
         // @ts-ignore
-        this.chartOptions[4].series[0].data = this.measures.series.humidity
+        this.chartOptions[4].series[0].data = this.measures.Humidity
 
         // @ts-ignore
-        this.chartOptions[5].series[0].data = this.measures.series.pressure_pa
+        this.chartOptions[5].series[0].data = this.measures.Pressure
       })
   }
 }

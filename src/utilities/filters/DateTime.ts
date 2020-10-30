@@ -1,6 +1,6 @@
 import { VueConstructor } from 'vue/types/umd';
 
-function formatDate(value: string) {
+export function formatDate(value: string) {
   if (value) {
     const options = {
       year: 'numeric',

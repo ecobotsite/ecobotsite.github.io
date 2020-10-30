@@ -1,11 +1,15 @@
 export interface RawData {
-    series: Series;
-}
-
-export interface Series {
-    pm25:        Array<number[]>;
-    pm10:        Array<number[]>;
-    temperature: Array<number[]>;
-    humidity:    Array<number[]>;
-    pressure_pa: Array<number[]>;
+    Id:           string;
+    City:         string;
+    StationName:  string;
+    LocalName:    string;
+    Timezone:     null;
+    Lat:          number;
+    Lon:          number;
+    Pm25:         Array<number[]>;
+    Pm10:         Array<number[]>;
+    Temperature:  Array<number[]>;
+    Humidity:     Array<number[]>;
+    Pressure:     any[];
+    QualityIndex: Array<number[]>;
 }
