@@ -1,18 +1,15 @@
 <template>
-  <div v-if="!loadingState.isDataLoading" class="charts">
+  <div class="charts">
     <highcharts :constructorType="'stockChart'" :options="chartOptions[i-1]" v-for="i in 6" :key="i"></highcharts>
   </div>
 </template>
 
 <script lang="ts">
-import DataService from '@/api/DataService';
 import { RawData } from '@/models/responses/rawData';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import apiClient from '../api/ApiClient';
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts';
 import { EventBus } from '@/event-bus'
-import { substractDaysFromToday } from '@/utilities/substractDaysFromToday';
 
 @Component({
   components: {
@@ -22,13 +19,7 @@ import { substractDaysFromToday } from '@/utilities/substractDaysFromToday';
 export default class Charts extends Vue {
   private dataTime: Date = new Date();
 
-  private loadingState = {
-    isDataLoading: true,
-  }
-
-  private dataService: DataService = new DataService();
-
-  private measures!: RawData;
+  @Prop() private measures!: RawData;
   private chartOptions = [
     {
       title: {
@@ -199,44 +190,30 @@ export default class Charts extends Vue {
       });
     });
 
-    EventBus.$on("refresh", async (props: {id: string, from: Date, to: Date }) => {
-        console.log(props)
-        await this.loadData(props.id, props.from, props.to)
+    EventBus.$on("refresh", () => {
+      console.log(this.measures)
+      // @ts-ignore
+      this.chartOptions[0].series[0].data = this.measures.pm25
+      // @ts-ignore
+      this.chartOptions[0].series[1].data = this.measures.pm10
+      
+      // @ts-ignore
+      this.chartOptions[1].series[0].data = this.measures.pm25
+
+      // @ts-ignore
+      this.chartOptions[2].series[0].data = this.measures.pm10
+
+      // @ts-ignore
+      this.chartOptions[3].series[0].data = this.measures.temperature
+
+      // @ts-ignore
+      this.chartOptions[4].series[0].data = this.measures.humidity
+
+      // @ts-ignore
+      this.chartOptions[5].series[0].data = this.measures.pressure
     })
-
-    //await this.loadData("1569", substractDaysFromToday(2), this.dataTime)
   }
 
-  private async loadData(id: string, from: Date, to: Date) {
-    this.loadingState.isDataLoading = true
-    await this.dataService.getData(id, from, to)
-      .then((x) => {
-        this.measures = x.data;
-        console.log(this.measures)
-        console.log(this.measures)
-        this.loadingState.isDataLoading = false;
-
-        // @ts-ignore
-        this.chartOptions[0].series[0].data = this.measures.pm25
-        // @ts-ignore
-        this.chartOptions[0].series[1].data = this.measures.pm10
-        
-        // @ts-ignore
-        this.chartOptions[1].series[0].data = this.measures.pm25
-
-        // @ts-ignore
-        this.chartOptions[2].series[0].data = this.measures.pm10
-
-        // @ts-ignore
-        this.chartOptions[3].series[0].data = this.measures.temperature
-
-        // @ts-ignore
-        this.chartOptions[4].series[0].data = this.measures.humidity
-
-        // @ts-ignore
-        this.chartOptions[5].series[0].data = this.measures.pressure
-        console.log(this.chartOptions[5].series[0].data)
-      })
-  }
+  
 }
 </script>

@@ -3,7 +3,7 @@ import apiClient from '@/api/ApiClient';
 import { RawData } from '@/models/responses/rawData';
 import { Location } from '@/models/responses/locations';
 
-function formatDate(date: Date) {
+function formatDate(date: string) {
     let d = new Date(date),
         month = '' + (d.getMonth() + 1),
         day = '' + d.getDate(),
@@ -34,7 +34,7 @@ function formatDate(date: Date) {
 export default class DataService {
     private repoAxios = apiClient;
 
-    async getData(deviceId: string, from: Date, to: Date): Promise<AxiosResponse<RawData>> {
+    async getData(deviceId: string, from: string, to: string): Promise<AxiosResponse<RawData>> {
         return this.repoAxios.get<RawData>(`/Measurement`, {
             params:{
                 From: formatDate(from),
