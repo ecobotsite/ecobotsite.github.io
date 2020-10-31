@@ -31,7 +31,7 @@ import DataService from '@/api/DataService';
   },
 })
 export default class Home extends Vue {
-  private chosenStation!: string;
+  private chosenStation: string = "1569";
   private dateFromChoose: string = substractDaysFromToday(2).toISOString();
   private dateToChoose: string = new Date().toISOString();
 
@@ -50,10 +50,12 @@ export default class Home extends Vue {
     await this.dataService.getLocations().then(x => {
       console.log(x.data)
       this.stationList = x.data
+      this.refresh()
     })
   }
 
   private refresh() {
+    console.log(this.dateFromChoose, this.dateToChoose)
     EventBus.$emit('refresh', {
       id: this.chosenStation,
       from: new Date(this.dateFromChoose),

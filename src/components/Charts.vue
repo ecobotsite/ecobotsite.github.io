@@ -204,7 +204,7 @@ export default class Charts extends Vue {
         await this.loadData(props.id, props.from, props.to)
     })
 
-    await this.loadData("1569", substractDaysFromToday(2), this.dataTime)
+    //await this.loadData("1569", substractDaysFromToday(2), this.dataTime)
   }
 
   private async loadData(id: string, from: Date, to: Date) {
