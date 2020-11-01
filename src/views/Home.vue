@@ -107,7 +107,7 @@ export default class Home extends Vue {
 
   private async loadData(id: string, from: string, to: string) {
     this.loadingState.isDataLoading = true
-    await this.dataService.getData(id, from, to)
+    await this.dataService.getData(id, from.replaceAll("вечера", "pm").replaceAll("ночи", "am"), to.replaceAll("вечера", "pm").replaceAll("ночи", "am"))
       .then((x) => {
         this.measures = x.data;
         this.loadingState.isDataLoading = false;
