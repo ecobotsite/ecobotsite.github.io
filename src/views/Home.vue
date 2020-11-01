@@ -101,6 +101,7 @@ export default class Home extends Vue {
   }
 
   private async refresh() {
+    console.log(this.dateChoose)
     await this.loadData(this.chosenStation, this.dateChoose.start, this.dateChoose.end)
   }
 

@@ -12,7 +12,7 @@ function formatDate(date: string) {
         hours = d.getHours().toString(),
         minutes = d.getMinutes().toString(),
         seconds = d.getSeconds().toString();
-
+    console.log(d)
     if (month.length < 2) 
         month = '0' + month;
 
