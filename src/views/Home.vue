@@ -39,6 +39,8 @@ import DateRangePicker from 'vue2-daterange-picker'
 import 'vue2-daterange-picker/dist/vue2-daterange-picker.css'
 import { RawData } from '@/models/responses/rawData';
 import Loader from '@/components/Loader.vue';
+import { AxiosResponse } from 'axios';
+import { SpecificRawData } from '@/models/responses/specificRawData';
 
 @Component({
   components: {
@@ -114,8 +116,8 @@ export default class Home extends Vue {
       this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 3),
       this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 4),
       this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 5),
-    ]).then(x => {
-      x.forEach(response => {
+    ]).then((x: [PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>]) => {
+      x.forEach((response: PromiseSettledResult<AxiosResponse<SpecificRawData>>) => {
         if (response.status == "fulfilled") {
           if (response.value.status === 200) {
             this.measures.id = response.value.data.id
