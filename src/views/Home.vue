@@ -107,14 +107,37 @@ export default class Home extends Vue {
 
   private async loadData(id: string, from: string, to: string) {
     this.loadingState.isDataLoading = true
-    await this.dataService.getData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"))
-      .then((x) => {
-        this.measures = x.data;
-        this.loadingState.isDataLoading = false;
-        setTimeout(() => {
-          EventBus.$emit('refresh')
-        }, 0)
+    Promise.allSettled([
+      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 0),
+      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 1),
+      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 2),
+      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 3),
+      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 4),
+      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 5),
+    ]).then(x => {
+      x.forEach(response => {
+        if (response.status == "fulfilled") {
+          if (response.value.status === 200) {
+            this.measures.id = response.value.data.id
+            this.measures.city = response.value.data.city
+            this.measures.stationName = response.value.data.stationName
+            this.measures.localName = response.value.data.localName
+
+            this.measures.pm10 = response.value.data.pollutantType === 2 ? response.value.data.data : this.measures.pm10
+            this.measures.pm25 = response.value.data.pollutantType === 3 ? response.value.data.data : this.measures.pm25
+            this.measures.temperature = response.value.data.pollutantType === 5 ? response.value.data.data : this.measures.temperature
+            this.measures.humidity = response.value.data.pollutantType === 1 ? response.value.data.data : this.measures.humidity
+            this.measures.pressure = response.value.data.pollutantType === 4 ? response.value.data.data : this.measures.pressure
+            this.measures.qualityIndex = response.value.data.pollutantType === 0 ? response.value.data.data : this.measures.qualityIndex
+          }
+        }
       })
+      
+      this.loadingState.isDataLoading = false;
+      setTimeout(() => {
+        EventBus.$emit('refresh')
+      }, 0)
+    })
   }
 }
 </script>

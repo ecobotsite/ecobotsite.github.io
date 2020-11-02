@@ -2,6 +2,7 @@ import { AxiosResponse } from 'axios';
 import apiClient from '@/api/ApiClient';
 import { RawData } from '@/models/responses/rawData';
 import { Location } from '@/models/responses/locations';
+import { SpecificRawData } from '@/models/responses/specificRawData';
 
 function formatDate(date: string) {
     let d = new Date(date),
@@ -12,7 +13,7 @@ function formatDate(date: string) {
         hours = d.getHours().toString(),
         minutes = d.getMinutes().toString(),
         seconds = d.getSeconds().toString();
-    console.log(d)
+
     if (month.length < 2) 
         month = '0' + month;
 
@@ -40,6 +41,17 @@ export default class DataService {
                 From: formatDate(from),
                 To: formatDate(to),
                 LocationId: deviceId,
+            }
+        })
+    }
+
+    async getSpecificData(deviceId: string, from: string, to: string, pollutantType: number): Promise<AxiosResponse<SpecificRawData>> {
+        return this.repoAxios.get<SpecificRawData>(`/Measurement/Type`, {
+            params:{
+                From: formatDate(from),
+                To: formatDate(to),
+                LocationId: deviceId,
+                PollutantType: pollutantType,
             }
         })
     }
