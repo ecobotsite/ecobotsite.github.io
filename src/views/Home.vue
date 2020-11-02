@@ -116,8 +116,8 @@ export default class Home extends Vue {
       this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 3),
       this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 4),
       this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 5),
-    ]).then((x: [PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>, PromiseSettledResult<AxiosResponse<SpecificRawData>>]) => {
-      x.forEach((response: PromiseSettledResult<AxiosResponse<SpecificRawData>>) => {
+    ]).then((x: any) => {
+      x.forEach((response: any) => {
         if (response.status == "fulfilled") {
           if (response.value.status === 200) {
             this.measures.id = response.value.data.id
