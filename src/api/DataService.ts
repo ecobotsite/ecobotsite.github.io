@@ -1,4 +1,4 @@
-import { AxiosResponse } from 'axios';
+import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import apiClient from '@/api/ApiClient';
 import { RawData } from '@/models/responses/rawData';
 import { Location } from '@/models/responses/locations';
@@ -45,14 +45,15 @@ export default class DataService {
         })
     }
 
-    async getSpecificData(deviceId: string, from: Date, to: Date, pollutantType: number): Promise<AxiosResponse<SpecificRawData>> {
+    async getSpecificData(deviceId: string, from: Date, to: Date, pollutantType: number, onDownloadProgress: (progressEvent: any) => void): Promise<AxiosResponse<SpecificRawData>> {
         return this.repoAxios.get<SpecificRawData>(`/Measurement/Type`, {
             params:{
                 From: formatDate(from),
                 To: formatDate(to),
                 LocationId: deviceId,
                 PollutantType: pollutantType,
-            }
+            },
+            onDownloadProgress: onDownloadProgress,
         })
     }
 

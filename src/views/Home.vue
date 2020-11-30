@@ -28,6 +28,7 @@
               type="datetimerange"
               start-placeholder="Початок"
               end-placeholder="Кінець"
+              :picker-options="pickerOptions"
               :clearable="false">
             </el-date-picker>
           </div>
@@ -40,7 +41,10 @@
     </div>
     <el-card>
       <charts class="display-data" v-if="!loadingState.isDataLoading" :measures="measures" />
-      <loader class="display-data" v-else/>
+      <div v-else>
+        <el-progress v-for="(list, key) in Array.from(loadingState.measuresDownloadProgress)" :key="key" :percentage="Math.floor((list[1].current / list[1].total) * 100)">
+        </el-progress>
+      </div>
     </el-card>
   </div>
 </template>
@@ -53,21 +57,37 @@ import { substractDaysFromToday } from '@/utilities/substractDaysFromToday';
 import { Location } from '@/models/responses/locations';
 import DataService from '@/api/DataService';
 import { RawData } from '@/models/responses/rawData';
-import Loader from '@/components/Loader.vue';
 import { AxiosResponse } from 'axios';
 import { SpecificRawData } from '@/models/responses/specificRawData';
 import {LocationNamed} from '@/models/data/locationNamed';
+import setDateTimePickerValue from '@/utilities/setDateTimePickerValue';
+
 
 @Component({
   components: {
     Charts,
-    Loader,
   },
 })
 export default class Home extends Vue {
+  private totalMeasurementCount = 6;
+
   private loadingState = {
     isStationLoading: false,
     isDataLoading: false,
+    measuresDownloadProgress: new Map<number, {current: number, total: number}>(),
+  }
+
+  private pickerOptions = {
+    shortcuts: [{
+      text: 'Остання неділя',
+      onClick(picker: any) {setDateTimePickerValue(picker, 3600 * 1000 * 24 * 7)}
+    }, {
+      text: 'Останній місяць',
+      onClick(picker: any) {setDateTimePickerValue(picker, 3600 * 1000 * 24 * 30)}
+    }, {
+      text: 'Останні 3 місяці',
+      onClick(picker: any) {setDateTimePickerValue(picker, 3600 * 1000 * 24 * 90)}
+    }]
   }
 
   private measures: RawData = {
@@ -120,7 +140,6 @@ export default class Home extends Vue {
         })
       })
 
-      //await this.refresh()
       this.loadingState.isStationLoading = false;
     })
   }
@@ -140,14 +159,26 @@ export default class Home extends Vue {
 
   private generateLoadTasks(id: string, from: Date, to: Date) {
     let tasks = []
-    for (let i=0; i < 6; i++) {
-      tasks.push(this.dataService.getSpecificData(id, from, to, i))
+    for (let i=0; i < this.totalMeasurementCount; i++) {
+      tasks.push(this.dataService.getSpecificData(id, from, to, i, this.onMeasureDownloadProgress(i)))
+      this.loadingState.measuresDownloadProgress.set(i, {current: 0, total: 100})
     }
     return tasks;
   }
 
+  private onMeasureDownloadProgress(measureTypeId: number) {
+    return (event: ProgressEvent) => {
+      this.loadingState.measuresDownloadProgress.set(measureTypeId, {total: event.total, current: event.loaded})
+      
+      this.$forceUpdate()
+    }
+  }
+
   private async loadData(id: string, from: Date, to: Date) {
-    this.loadingState.isDataLoading = true
+    this.loadingState.isDataLoading = true;
+
+    this.loadingState.measuresDownloadProgress = new Map<number, {current: number, total: number}>();
+
     Promise.allSettled([
       ...this.generateLoadTasks(id, from, to)
     ]).then((x: any) => {
@@ -168,7 +199,7 @@ export default class Home extends Vue {
           }
         }
       })
-      
+
       this.loadingState.isDataLoading = false;
       setTimeout(() => {
         EventBus.$emit('refresh')
