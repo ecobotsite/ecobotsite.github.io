@@ -6,7 +6,7 @@
         v-for="(marker, index) in markers"
         :lat-lng="[marker.lat, marker.lng]"
         :key="index"
-        :icon="icon"
+        :icon="choosedLocation === marker.id ? iconChoosed : iconNotChoosed"
         @click="chooseLocation(marker.id)"
       >
       </l-marker>
@@ -31,7 +31,9 @@ import { Location } from "@/models/responses/locations";
   },
 })
 export default class LocationMap extends Vue {
-  @Prop() markers!: {id: number, lat: number, lng: number}[];
+  @Prop() markers!: { id: number; lat: number; lng: number }[];
+
+  private choosedLocation: string = "";
 
   private zoom: number = 6.5;
   private center: any = latLng(49.791474, 30.608503);
@@ -46,14 +48,22 @@ export default class LocationMap extends Vue {
   };
   private showMap: boolean = true;
 
-  icon: any = icon({
+  iconNotChoosed: any = icon({
     iconUrl: "https://marker.nanoka.fr/map_pin-FF0000-FFF-FF0000-A-40.svg",
     iconSize: [32, 37],
     iconAnchor: [16, 37],
   });
 
+  iconChoosed: any = icon({
+    iconUrl:
+      "https://marker.nanoka.fr/map_pin-FF0000-FFF-FF0000-%E2%9C%BF-40.svg",
+    iconSize: [32, 37],
+    iconAnchor: [16, 37],
+  });
+
   private chooseLocation(locationId: string) {
-      this.$emit("chooseLocation", {locationId})
+    this.choosedLocation = locationId;
+    this.$emit("chooseLocation", { locationId });
   }
 }
 </script>
