@@ -1,29 +1,47 @@
 <template>
   <div class="home">
-    <section class="choose">
-      <div class="required">
-        <div class="station">
-          <label>Оберіть станцію </label>
-          <div class="select">
-            <select @change="newStation($event)" name="station" id="stations">
-              <option v-for="i in stationList" :key="i.id" :value="i.id">{{i.city}} - {{i.stationName}}</option>
-            </select>
+    <div class="header">
+      <el-card class="statistic">
+        <el-tabs type="border-card">
+          <el-tab-pane label="Найбрудніші">Пізніше тут буде топ найзабрудненіших станцій</el-tab-pane>
+          <el-tab-pane label="Найчистіші">Пізніше тут буде топ найчистіших станцій</el-tab-pane>
+        </el-tabs>
+      </el-card>
+      <el-card class="choose">
+        <div class="required">
+          <div class="station">
+            <label>Оберіть станцію </label>
+            <v-select 
+              :disabled="this.loadingState.isStationLoading" 
+              :loading="this.loadingState.isStationLoading" 
+              v-model="selectedStation" :options="stationDisplayList" 
+              label="displayName" :reduce="location => location.id">
+              <template #spinner="{ loading }">
+                <div v-if="loading" style="border-left-color: rgba(88,151,251,0.71)" class="vs__spinner"/>
+              </template>
+            </v-select>
+          </div>
+
+          <div class="date">
+            <el-date-picker
+              v-model="dateChoose"
+              type="datetimerange"
+              start-placeholder="Початок"
+              end-placeholder="Кінець"
+              :clearable="false">
+            </el-date-picker>
           </div>
         </div>
 
-        <div class="date">
-          <VueCtkDateTimePicker v-model="dateChoose" :range="true" label="Оберіть відрізок часу"/>
-        </div>
-      </div>
-
-      <div class="refresh">
-        <button v-on:click="refresh">
+        <el-button class="refresh-button" type="primary" v-on:click="refresh"> 
           Оновити
-        </button>
-      </div>
-    </section>
-    <charts class="display-data" v-if="!loadingState.isDataLoading" :measures="measures" />
-    <loader class="display-data" v-else/>
+        </el-button>
+      </el-card>
+    </div>
+    <el-card>
+      <charts class="display-data" v-if="!loadingState.isDataLoading" :measures="measures" />
+      <loader class="display-data" v-else/>
+    </el-card>
   </div>
 </template>
 
@@ -34,24 +52,22 @@ import { EventBus } from '@/event-bus'
 import { substractDaysFromToday } from '@/utilities/substractDaysFromToday';
 import { Location } from '@/models/responses/locations';
 import DataService from '@/api/DataService';
-// @ts-ignore
-import DateRangePicker from 'vue2-daterange-picker'
-import 'vue2-daterange-picker/dist/vue2-daterange-picker.css'
 import { RawData } from '@/models/responses/rawData';
 import Loader from '@/components/Loader.vue';
 import { AxiosResponse } from 'axios';
 import { SpecificRawData } from '@/models/responses/specificRawData';
+import {LocationNamed} from '@/models/data/locationNamed';
 
 @Component({
   components: {
     Charts,
-    DateRangePicker,
     Loader,
   },
 })
 export default class Home extends Vue {
   private loadingState = {
-    isDataLoading: true,
+    isStationLoading: false,
+    isDataLoading: false,
   }
 
   private measures: RawData = {
@@ -70,21 +86,18 @@ export default class Home extends Vue {
     qualityIndex: [],
   };
 
-  private chosenStation: string = "1569";
-  private dateChoose: {start: string, end: string} = {start: substractDaysFromToday(2).toISOString(), end: new Date().toISOString()};
+  private selectedStation: string|null = null;
+
+  private dateChoose: Array<Date> = [substractDaysFromToday(2), new Date()]
+
+  private stationList: Location[] = []
+  private stationDisplayList: LocationNamed[] = [];
 
   private dataService: DataService = new DataService()
 
-  private stationList: Location[] = []
-
-  private newStation(event: Event) {
-    // @ts-ignore
-    let id: string = event.target.value
-    this.chosenStation = id.split("_")[1]
-    console.log(this.chosenStation)
-  }
-
   private async created() {
+    this.loadingState.isStationLoading = true;
+
     await this.dataService.getLocations().then(async x => {
       this.stationList = x.data.sort((obj1, obj2) => {
           if (obj1.city > obj2.city) {
@@ -98,24 +111,45 @@ export default class Home extends Vue {
           return 0;
       });
 
-      await this.refresh()
+      this.stationDisplayList = []
+
+      this.stationList.forEach((x) => {
+        this.stationDisplayList.push({
+          id: x.id,
+          displayName: `${x.city} - ${x.stationName}`,
+        })
+      })
+
+      //await this.refresh()
+      this.loadingState.isStationLoading = false;
     })
   }
 
   private async refresh() {
-    console.log(this.dateChoose)
-    await this.loadData(this.chosenStation, this.dateChoose.start, this.dateChoose.end)
+    if (this.selectedStation === null) {
+      this.$notify.error({
+        title: 'Виберіть станцію',
+        message: 'Перед оновленням данних потрібно вибрати станцію'
+      });
+      return;
+    }
+    const stationId = this.selectedStation.split("_")[1]
+
+    await this.loadData(stationId, this.dateChoose[0], this.dateChoose[1])
   }
 
-  private async loadData(id: string, from: string, to: string) {
+  private generateLoadTasks(id: string, from: Date, to: Date) {
+    let tasks = []
+    for (let i=0; i < 6; i++) {
+      tasks.push(this.dataService.getSpecificData(id, from, to, i))
+    }
+    return tasks;
+  }
+
+  private async loadData(id: string, from: Date, to: Date) {
     this.loadingState.isDataLoading = true
     Promise.allSettled([
-      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 0),
-      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 1),
-      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 2),
-      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 3),
-      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 4),
-      this.dataService.getSpecificData(id, from.replace("вечера", "pm").replace("ночи", "am"), to.replace("вечера", "pm").replace("ночи", "am"), 5),
+      ...this.generateLoadTasks(id, from, to)
     ]).then((x: any) => {
       x.forEach((response: any) => {
         if (response.status == "fulfilled") {
@@ -145,17 +179,30 @@ export default class Home extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.display-data {
-  height: 80vh;
+.refresh-button {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+}
+
+.statistic {
+  width: 60%;
+}
+
+.el-card {
+  margin: 0.4em;
 }
 
 .choose {
-  height: 20vh;
   display: flex;
   flex-direction: column;
+  overflow: unset;
+  //align-items: flex-end;
 
-  width: 80%;
-  margin-left: 10%;
+  width: 40%;
+  //margin-left: 10%;
 
   .required {
     > * {
@@ -172,53 +219,7 @@ export default class Home extends Vue {
   }
 }
 
-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  -ms-appearance: none;
-  appearance: none;
-  box-shadow: none;
-  border: 1px solid dodgerblue;
-  background-image: none;
-}
-/* Remove IE arrow */
-select::-ms-expand {
-  display: none;
-}
-/* Custom Select */
-.select {
-  position: relative;
-  display: flex;
-  width: 20em;
-  height: 2em;
-  line-height: 2;
-  background: #8092a5;
-  overflow: hidden;
-  border-radius: .25em;
-}
-select {
+.v-select {
   flex: 1;
-  padding: 0 .5em;
-  color: black;
-  border: 1px solid dodgerblue;
-  cursor: pointer;
-}
-/* Arrow */
-.select::after {
-  content: '\25BC';
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 0 0.5em;
-  background: #657d94;
-  cursor: pointer;
-  pointer-events: none;
-  -webkit-transition: .25s all ease;
-  -o-transition: .25s all ease;
-  transition: .25s all ease;
-}
-/* Transition */
-.select:hover::after {
-  color: #f39c12;
 }
 </style>
