@@ -2,10 +2,11 @@
   <div class="home">
     <div class="header">
       <el-card class="statistic">
-        <el-tabs type="border-card">
+        <!--<el-tabs type="border-card">
           <el-tab-pane label="Найбрудніші">Пізніше тут буде топ найзабрудненіших станцій</el-tab-pane>
           <el-tab-pane label="Найчистіші">Пізніше тут буде топ найчистіших станцій</el-tab-pane>
-        </el-tabs>
+        </el-tabs>-->
+        <location-map :markers="markers" @chooseLocation="chooseLocationOnMap"/>
       </el-card>
       <el-card class="choose">
         <div class="required">
@@ -61,11 +62,15 @@ import { AxiosResponse } from 'axios';
 import { SpecificRawData } from '@/models/responses/specificRawData';
 import {LocationNamed} from '@/models/data/locationNamed';
 import setDateTimePickerValue from '@/utilities/setDateTimePickerValue';
+// @ts-ignore
+import { latLng } from "leaflet";
+import LocationMap from '@/components/LocationMap.vue';
 
 
 @Component({
   components: {
     Charts,
+    LocationMap,
   },
 })
 export default class Home extends Vue {
@@ -110,6 +115,8 @@ export default class Home extends Vue {
 
   private dateChoose: Array<Date> = [substractDaysFromToday(2), new Date()]
 
+  private markers: any[] = []
+
   private stationList: Location[] = []
   private stationDisplayList: LocationNamed[] = [];
 
@@ -138,10 +145,19 @@ export default class Home extends Vue {
           id: x.id,
           displayName: `${x.city} - ${x.stationName}`,
         })
+        if (x.lat && x.lon)
+          this.markers.push({id: x.id, lat: x.lat, lng: x.lon})
       })
 
       this.loadingState.isStationLoading = false;
     })
+  }
+
+  private chooseLocationOnMap(location: {locationId: string}) {
+    console.log(location)
+    const loc = this.stationList.filter(x => x.id === location.locationId)[0];
+    if (loc)
+      this.selectedStation = loc.id
   }
 
   private async refresh() {
@@ -225,7 +241,6 @@ export default class Home extends Vue {
 .el-card {
   margin: 0.4em;
 }
-
 .choose {
   display: flex;
   flex-direction: column;
@@ -236,6 +251,8 @@ export default class Home extends Vue {
   //margin-left: 10%;
 
   .required {
+    flex: 1;
+
     > * {
       margin: 1rem 0;
     }
@@ -252,5 +269,16 @@ export default class Home extends Vue {
 
 .v-select {
   flex: 1;
+}
+</style>
+
+<style lang="scss">
+.choose {
+  .el-card__body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 90%;
+  }
 }
 </style>

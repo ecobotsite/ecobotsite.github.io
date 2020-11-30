@@ -16,7 +16,12 @@ import 'vue-select/dist/vue-select.css';
 import Element from 'element-ui';
 // @ts-ignore
 import vSelect from 'vue-select';
+import { LMap, LTileLayer, LMarker } from 'vue2-leaflet';
+import 'leaflet/dist/leaflet.css';
 
+Vue.component('l-map', LMap);
+Vue.component('l-tile-layer', LTileLayer);
+Vue.component('l-marker', LMarker);
 Vue.component('v-select', vSelect)
 
 
