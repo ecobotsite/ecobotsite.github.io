@@ -34,10 +34,20 @@
             </el-date-picker>
           </div>
         </div>
-
-        <el-button class="refresh-button" type="primary" v-on:click="refresh"> 
-          Оновити
-        </el-button>
+        <div class="user-action">
+          <el-button class="refresh-button" type="primary" v-on:click="refresh"> 
+            Оновити
+          </el-button>
+          <el-dropdown class="download-button" @command="saveData">
+            <el-button type="primary">
+              Завантажити <i class="el-icon-arrow-down el-icon--right"></i>
+            </el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item :disabled="!loadingState.isDataLoaded" command="json">JSON</el-dropdown-item>
+              <el-dropdown-item :disabled="true" command="csv">CSV</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+        </div>
       </el-card>
     </div>
     <el-card>
@@ -65,6 +75,7 @@ import setDateTimePickerValue from '@/utilities/setDateTimePickerValue';
 // @ts-ignore
 import { latLng } from "leaflet";
 import LocationMap from '@/components/LocationMap.vue';
+import FileSaver from '@/utilities/FileSaver';
 
 
 @Component({
@@ -79,6 +90,7 @@ export default class Home extends Vue {
   private loadingState = {
     isStationLoading: false,
     isDataLoading: false,
+    isDataLoaded: false,
     measuresDownloadProgress: new Map<number, {current: number, total: number}>(),
   }
 
@@ -192,6 +204,7 @@ export default class Home extends Vue {
 
   private async loadData(id: string, from: Date, to: Date) {
     this.loadingState.isDataLoading = true;
+    this.loadingState.isDataLoaded = false;
 
     this.loadingState.measuresDownloadProgress = new Map<number, {current: number, total: number}>();
 
@@ -203,6 +216,8 @@ export default class Home extends Vue {
           if (response.value.status === 200) {
             this.measures.id = response.value.data.id
             this.measures.city = response.value.data.city
+            this.measures.lat = response.value.data.lat
+            this.measures.lon = response.value.data.lon
             this.measures.stationName = response.value.data.stationName
             this.measures.localName = response.value.data.localName
 
@@ -217,10 +232,23 @@ export default class Home extends Vue {
       })
 
       this.loadingState.isDataLoading = false;
+      this.loadingState.isDataLoaded = true;
+
       setTimeout(() => {
         EventBus.$emit('refresh')
       }, 0)
     })
+  }
+
+  private saveData(type: string) {
+    if (type === "json") {
+      var blob = new Blob([JSON.stringify(this.measures, null, 4)], {type: "text/json;charset=utf-8"});
+      FileSaver.saveAs(blob, `${this.measures.id}.json`);
+    } else if (type === "csv") {
+      //let csv = obj2csv(this.measures)
+
+      //console.log(csv)
+    }
   }
 }
 </script>
@@ -269,6 +297,14 @@ export default class Home extends Vue {
 
 .v-select {
   flex: 1;
+}
+
+.user-action {
+  display: flex;
+
+  > * {
+    margin: 0 1rem;
+  }
 }
 </style>
 
