@@ -3,6 +3,7 @@ import apiClient from '@/api/ApiClient';
 import { RawData } from '@/models/responses/rawData';
 import { Location } from '@/models/responses/locations';
 import { SpecificRawData } from '@/models/responses/specificRawData';
+import { HeatRecord } from '@/models/responses/heatRecord';
 
 function formatDate(date: Date) {
     let d = new Date(date),
@@ -59,5 +60,9 @@ export default class DataService {
 
     async getLocations(): Promise<AxiosResponse<Location[]>> {
         return this.repoAxios.get<Location[]>(`/Location/List`)
+    }
+
+    async getHeatMap(): Promise<AxiosResponse<HeatRecord[]>> {
+        return this.repoAxios.get<HeatRecord[]>(`/Location/HeatMap`)
     }
 }

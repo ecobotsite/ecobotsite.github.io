@@ -6,7 +6,7 @@
           <el-tab-pane label="Найбрудніші">Пізніше тут буде топ найзабрудненіших станцій</el-tab-pane>
           <el-tab-pane label="Найчистіші">Пізніше тут буде топ найчистіших станцій</el-tab-pane>
         </el-tabs>-->
-        <location-map :markers="markers" @chooseLocation="chooseLocationOnMap"/>
+        <location-map :markers="markers" :heatMarkers="heatMarkers" @chooseLocation="chooseLocationOnMap"/>
       </el-card>
       <el-card class="choose">
         <div class="required">
@@ -75,7 +75,9 @@ import setDateTimePickerValue from '@/utilities/setDateTimePickerValue';
 // @ts-ignore
 import { latLng } from "leaflet";
 import LocationMap from '@/components/LocationMap.vue';
+// @ts-ignore
 import FileSaver from '@/utilities/FileSaver';
+import { HeatRecord } from '@/models/responses/heatRecord';
 
 
 @Component({
@@ -107,6 +109,9 @@ export default class Home extends Vue {
     }]
   }
 
+  private heatMarkers: any[] = [];
+  private heatMap: HeatRecord[] = [];
+
   private measures: RawData = {
     id: "",
     city: "",
@@ -136,6 +141,17 @@ export default class Home extends Vue {
 
   private async created() {
     this.loadingState.isStationLoading = true;
+
+    this.heatMap = []
+    this.heatMarkers = []
+
+    await this.dataService.getHeatMap().then(async x => {
+      this.heatMap = x.data;
+      this.heatMap.forEach(item => {
+        if (item.value && item.lat && item.lon)
+          this.heatMarkers.push([item.lat, item.lon, item.value / 10])
+      })
+    })
 
     await this.dataService.getLocations().then(async x => {
       this.stationList = x.data.sort((obj1, obj2) => {
